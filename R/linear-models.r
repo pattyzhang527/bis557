@@ -19,10 +19,8 @@ linear_model <- function(formula, data) {
   var<-all.vars(formula)
   Y<-data[,var[1]]
   
-  #use qr to decompose the matrix and find coefficients as beta
-  #because of qr.solve function, some of the beta will just show as 0, we change to NA
-  beta<-qr.solve(X,Y)
-  beta[which(beta==0)] <- NA
+  #use qr function to decompose the matrix and find coefficients as beta
+  beta<-qr.coef(qr(X),Y)
   
   #fit the coponents of lm model into a list, and set the class as lm
   #if I cannot get the value, I would just assign it as NULL ---- got help from Hongyu Li
@@ -30,14 +28,14 @@ linear_model <- function(formula, data) {
   lm_result<- list(
     coefficients = beta,
     dr.residual = nrow(X) - ncol(X),
-    call = call("lm", formula),
+    call = call("linear_model", formula),
     terms = terms(x = formula, data = data),
     qr = qr(X),
-    fitted.values =X%*%beta,
-    residuals = Y - X%*%beta,
+    fitted.values =NULL,
+    residuals = NULL,
     y = Y,
     x = X,
-    rank = ncol(X),
+    rank = NULL,
     model = NULL,
     weights = NULL,
     contrasts = NULL,
