@@ -32,7 +32,7 @@ linear_model <- function(formula, data) {
     dr.residual = nrow(X) - ncol(X),
     call = call("lm", formula),
     terms = terms(x = formula, data = data),
-    qr = qr(X)
+    qr = qr(X),
     fitted.values =X%*%beta,
     residuals = Y - X%*%beta,
     y = Y,
@@ -43,7 +43,7 @@ linear_model <- function(formula, data) {
     contrasts = NULL,
     xlevels = NULL,
     offset = NULL,
-    na.action = NULL,
+    na.action = NULL
   )
   
   class(lm_result) = 'lm'
@@ -52,3 +52,4 @@ linear_model <- function(formula, data) {
   return(lm_result)
   
 }
+
