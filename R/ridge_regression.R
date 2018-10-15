@@ -39,11 +39,3 @@ ridge_reg = function(formula, lambda, data){
   ret
 }
 
-#' Run ridge regression analysis to calculate coefficients.
-#'
-#' @param formula A formula.
-#' @param lambda A number.
-#' @param data A dataset.
-#' @return The estimated coefficients for ridge regression.
-#' @examples
-#' fit <- ridge_reg(Sepal.Length ~., 1,iris)
