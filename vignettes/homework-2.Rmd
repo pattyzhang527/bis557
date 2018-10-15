@@ -1,0 +1,50 @@
+---
+title: "Ridge Regression Model MSE"
+author: "Patty Zhang"
+date: "10/14/2018"
+output: html_document
+---
+
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{The linear model vignette}
+-->
+
+## The ridge regression function
+The ridge regression function is to find an intelligent way of reducing the size of the prediction vector $\hat{\beta}$ while maintaining as much predictive power as possible. The ridge regression vector minimizes a combination of the sum of squares and the size of the regression vector, with the parameter $\lambda$ giving the relative balance between these two tasks. Here we are going to look at the effect on out-of-sample mean squared error as $\lambda$ varries and try to find the $\lambda$ which minimizes the mean squared error.
+
+# Loading library and datasets
+```{r}
+library(bis557)
+data(ridge_test)
+data(ridge_train)
+
+#one example
+fit <- ridge_reg(Sepal.Length ~., lambda = 1, iris)
+summary(fit)
+```
+
+# Looking at effect on the out-of-sample mean squared error as $\lambda$ varies
+```{r}
+# Predict values of ridge regression
+# This is according to what we learnt in class
+predict.ridge_reg <- function(object, ...){
+  newdata <- list(...)[[1]]
+  m <- model.matrix(object$form,newdata)
+  m %*% object$coefficients
+}
+
+# Find the relationship between log(lambda) and mse
+lambda_fit <- seq(0.1, 200, by=0.1)
+mse = rep(NA, length(lambda_fit))
+for (i in 1:length(lambda_fit)){
+  fit <- ridge_reg(y~., lambda_fit[i], ridge_train)
+  error <- ridge_test$y - predict(fit, ridge_test)
+  mse[i] <- mean(error^2)
+}
+
+#plot mse with log(lambda) values, here we use log(lambda)
+plot(mse~log(lambda_fit), xlab = "log(lambda)", ylab = "out-of-sample mean squared error values", type = "l")
+#find the lambda value which minimizes out-of-sample mse
+lambda_fit[which(mse == min(mse))]
+```

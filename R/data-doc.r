@@ -8,3 +8,21 @@
 #' on linear regressions. This data set gives us a basis for exploration.
 NULL
 
+#' A data set for the second homework
+#'
+#' @name ridge_train
+#' @docType data
+#' @rdname ridge_train
+#' @description In homework 2 we explore ridge regression, especially the effect of lambda values
+#' on ridge regressions. This data set gives us a basis for exploration on train dataset.
+"ridge_train"
+
+#' A data set for the second homework
+#'
+#' @name ridge_test
+#' @docType data
+#' @rdname ridge_test
+#' @description In homework 2 we explore ridge regression, especially the effect of lambda values
+#' on ridge regressions. This data set gives us a basis for exploration on test dataset.
+"ridge_test"
+
