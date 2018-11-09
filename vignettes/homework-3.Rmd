@@ -1,0 +1,154 @@
+---
+title: "Homework-3"
+author: "Patty Zhang"
+date: "11/9/2018"
+output: html_document
+---
+
+# 1. CASL page 117, question 7.
+ Kernels can also be used as density estimators. Specifically, we have
+$$f_h(x)=\dfrac{1}{n}\sum_{i}K_h(x-x_i)$$
+In this setting we see again why it is important to have the integral of the kernel equal to 1. Write a function kern_density that accepts a training vector x, bandwidth h, and test set x_new, returning the kernel density estimate from the Epanechnikov kernel. Visually test how this performs for some hand constructed datasets and bandwidths.
+
+**answer**:
+Start with running the Epanechnikov kernel function with input x, h
+Epanechnikov kernel is given by 
+$$K(x) = \frac{3}{4} (1-x^2) . 1_{|x| \leq 1}$$
+```{r}
+kernel_epan <- function(x, h = 1) {
+  x <- x / h
+  ran <- as.numeric(abs(x) <= 1)
+  val <- (3/4) * ( 1 - x^2 ) * ran * (1/h)
+  return(val)
+}
+```
+
+Use the kern_density function to calculate the kernel density with Inputs x, h, and x_new
+The function will show how the kernel density estimate by the Epanchnikov kernel
+
+```{r}
+kern_density <- function(x, h, x_new) {
+  sapply(x_new, function(xi) {
+    kh <- kernel_epan((x - xi), h = h)
+    den <- sum(kh)/length(x)
+    den
+  })
+}
+```
+
+Visually test how this performs for some hand constructed datasets normal distribution N(0,1) and bandwidths with h = 0.01, 0.05, 0.5 and 1.
+
+From the following plots, I learnt that the estimate is smoother when the bandwidth is larger. When the bandwith is 0.01, the plot is more like broken-line, while when the bandwith is 1, the plot is like a normal distribution plot and centered at 0. The purple line indicates the normal distribution, and the black line is our estimation from kernal function.
+
+```{r}
+# Test the function with hand constructed datasets and bandwidths
+set.seed(27)
+n <- 500
+x <- rnorm(n)
+x_new <- rnorm(n)
+h <- c(0.01, 0.05, 0.5, 1)
+
+sapply(h, function(new_h) {
+  plot(sort(x_new),  kern_density(x, new_h, sort(x_new)),type="l", main=paste("bandwidth =", new_h), 
+       xlab= "test x", ylab="Kernel Density") 
+  curve(dnorm(x), col='purple', lty = 4, add=TRUE)
+})
+
+```
+
+# 2. CASL page 200, question 3.
+Show that if $f$ and $g$ are both convex functions, then their sum must also be convex.
+
+**answer**:
+if $f(x)$ and $g(x)$ are convex functions then we will know that:
+$$
+f[\lambda x_1 + (1-\lambda)x_2] \le \lambda f(x_1) + (1-\lambda)f(x_2)
+$$
+and
+$$
+g[\lambda x_1 + (1-\lambda)x_2] \le \lambda g(x_1) + (1-\lambda)g(x_2)
+$$
+Suppose $h=f+g$, we have 
+$$
+\begin{aligned}
+h[\lambda x_1 + (1-\lambda)x_2] &= f[\lambda x_1 + (1-\lambda)x_2]+g[\lambda x_1 + (1-\lambda)x_2] \\
+&\le \lambda(f(x_1) + g(x_1)) + (1-\lambda)(f(x_2) + g(x_2)) \\
+&= \lambda h(x_1) + (1-\lambda)h(x_2),
+\end{aligned}
+$$
+Therefore $h$ as the sume of $f$ and $g$ is also a convex function.
+
+# 3. CASL page 200, question 4.
+
+Illustrate that the absolute value function is convex. Using the result from the previous exercise, show that the l1-norm is also convex.
+
+**answer**:
+L1-norm indicates the absolute value, therefore in this question, it asks me to prove that $f(x) = |x|$ is convex.
+
+Let x, y $\in \mathbb{R}$, let $\alpha$, $\beta$ $\in \mathbb{R}_{>0}$ where $\alpha + \beta = 1$.
+$$
+\begin{aligned}
+f(\alpha x + \beta y) = |\alpha x + \beta y| \leq |\alpha x| + |\beta y | = |\alpha| |x| + |\beta| |y| = \alpha |x| + \beta |y| = \alpha f(x) + \beta f(y)
+\end{aligned}
+$$
+
+therefore,
+$$
+\begin{aligned}
+f(\alpha x + \beta y) \leq \alpha f(x) + \beta f(y)
+\end{aligned}
+$$
+Based on the above analysis, I proved that the l1-norm is also convex.
+
+# 4. CASL page 200, question 5.
+Prove that the elastic net objective function is convex using the results from the previous two exercises.
+
+**answer**:
+The elastic objective function is 
+
+$$
+f(b;\lambda, \alpha) = \frac{1}{2n} ||y-Xb||^2_2 + \lambda \left((1-\alpha) \frac{1}{2} ||b||_2^2 + \alpha||b||_1\right)
+$$
+
+Because $(y_i-X_{ij}b_j)^2$ is a convex function, according to question2, $||y-Xb||^2_2 = \sum_i \sum_j (y_i-X_{ij}b_j)^2$ is convex function; because $(b_j)^2$ is convex, then the sum $||b||_2^2 = \sum_j (b_j)^2$ is convex too.
+
+According to question 3, the l-1 norm $||b||_1$ is a convex function as well. 
+
+Back to the objective function, n>0, $\lambda > 0$ and $\alpha \in [0,1]$, so the sum of the three parts of convex function 
+$$
+\frac{1}{2n} ||y-Xb||^2_2 + \lambda \left((1-\alpha) \frac{1}{2} ||b||_2^2 + \alpha||b||_1\right)
+$$
+is a convex function. 
+
+# 5. CASL page 200, question 6.
+Find the KKT conditions for glmnet when 0 < $\alpha$ ≤ 1 and implement a lasso_reg_with_screening function that takes an $\alpha$ parameter.
+
+**answer**:
+```{r}
+set.seed(27)
+library(glmnet)
+library(Matrix)
+n <- 1000L
+p <- 5000L
+X <- matrix(rnorm(n * p), ncol = p)
+beta <- c(seq(1, 0.1, length.out=(10L)), rep(0, p - 10L))
+y <- X %*% beta + rnorm(n = n, sd = 0.15)
+```
+
+Then use glmnet to fit a lasso regression, check the KKT conditions to find the lambda value resulting in the minimum mean squared error). The result is only a very small portion of data resulting in invalid values.
+
+```{r}
+# glmnet
+g_new<- cv.glmnet(X, y, alpha=1)
+lambda.min <- g_new$lambda.min
+beta_hat <- g_new$glmnet.g_new$beta[,which(g_new$lambda == g_new$lambda.min)]
+
+# implement a lasso_reg_with_screening function
+lasso_reg_with_screening <- function(X, y, b, lambda) {
+  resids <- y - X %*% b
+  res <- apply(X, 2, function(xj) crossprod(xj, resids)) / lambda / nrow(X)
+  (b == 0) & (abs(res) >= 1)
+}
+```
+
+
