@@ -2,5 +2,9 @@
 
 export(linear_model)
 export(ridge_reg)
+export(sparse.matrix)
+export(sparse_add)
+export(sparse_multiply)
+export(sparse_transpose)
 import(MASS)
 import(stats)
