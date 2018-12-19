@@ -26,3 +26,21 @@ NULL
 #' on ridge regressions. This data set gives us a basis for exploration on test dataset.
 "ridge_test"
 
+#' A train data for the fifth homework
+#'
+#' @name emnist_train
+#' @docType data
+#' @rdname emnist_train
+#' @description In homework 5 we explore the neural networks
+#' This data set gives us a basis for exploration.
+NULL
+
+#' A test data for the fifth homework
+#'
+#' @name emnist_test
+#' @docType data
+#' @rdname emnist_test
+#' @description In homework 5 we explore the neural networks
+#' This data set gives us a basis for validation.
+NULL
+
