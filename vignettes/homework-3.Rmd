@@ -5,6 +5,11 @@ date: "11/9/2018"
 output: html_document
 ---
 
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{The Homework 3 vignette}
+-->
+
 # 1. CASL page 117, question 7.
  Kernels can also be used as density estimators. Specifically, we have
 $$f_h(x)=\dfrac{1}{n}\sum_{i}K_h(x-x_i)$$

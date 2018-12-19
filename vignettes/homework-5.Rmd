@@ -211,19 +211,20 @@ cat('Test accuracy:', scores[[2]], '\n')
 
 From the output above, the out-of-sample prediction accuracy is over 98%, greatly larger than 85%, indicating that the out-of-sample prediction increases in the CNN method. It represents that CNN plays a better role in identifying handwriting characters than LASSO.
 
-![CNN Result](cnn result.png)
+I intened to show the CNN result with cnn result.png, but it gave me an warning and turned out to be an error in Travis, therefore, I attached the pics in Vignette folder, please help yourself to checking. Thank you!
+```{r}
+#![CNN Result](cnn result.png)
+```
 
 
-#CASL 8.11.4
+#2. CASL 8.11.4
 I downloaded the emnist dataset from https://www.westernsydney.edu.au/bens/home/reproducible_research/emnist
 Preparing for further evaluation, I split the dataset into training and testing dataset, where the traning datset contains 88,799 observations and the testing dataset contains 14,799 observations.
 
 In order to figure out the most suitable kernel size, I tried size = (2,2); (3,3); (5,5); (6,6) and found the test accuracy for them are 0.6841003, 0.6623017, 0.702615 and 0.6711203 respectively. Therefore, a kernel size = (5,5) should be utilized in the following calculation.
 
-I first tried 10 epochs and found that the valid accuracy would first increase and achieves its highest point at ephochs = approximately 2 or 3, and then the accuracy starts decreasing. (Shown in the graph: accuracy changes with epoch). Therefore, using epoch = 10 is not a good idea in this problem when calculating the accuracy.
+I first tried 10 epochs and found that the valid accuracy would first increase and achieves its highest point at ephochs = approximately 2 or 3, and then the accuracy starts decreasing. (Shown in the graph: epoch change value.jpeg). Therefore, using epoch = 10 is not a good idea in this problem when calculating the accuracy.
 
-![accuracy changes with epoch](epoch change.jpeg)
-![accuracy values changes with epoch](epoch change value.jpeg)
 Considering using 10 epoches in the iteration is a waste of time, I designed early stop point in the model training process. If the accuracy value decreases consecutively twice, the training will be automatically stopped, and the highest epoch will be produced.
 
 ```{r,eval=FALSE}
@@ -299,14 +300,7 @@ cat('Train:', predict.train==(emnist_train[,1]-1), '\n')
 cat('Test:', predict.test==(emnist_test[,1]-1), '\n')
 ```
 
-Our iteration stops at ephoch = 5, and the highest valid accuracy is 0.9182 and occurs at epoch = 3. The overall valid accuracy is 0.9057 and occurs at epoch = 5. The prediction accuracy in the text book are 0.9166667 (training) and 0.9039263 (testing).The  accuracy is very similar to our textbook. I also noticed that training accuracy is lower than the valid accuracy. To my understanding, one of the potential reason is we have high drop out rate as 0.5. High drop out rate may influence our final result. In the future work, I will try different combinations with drop out rate.
-
-
-![Final plot result](2plot.jpeg)
-
-
-![Final value result](2result.jpeg)
-
+Our iteration stops at ephoch = 5, and the highest valid accuracy is 0.9182 and occurs at epoch = 3. The overall valid accuracy is 0.9057 and occurs at epoch = 5. The prediction accuracy in the text book are 0.9166667 (training) and 0.9039263 (testing).The  accuracy is very similar to our textbook. I also noticed that training accuracy is lower than the valid accuracy. To my understanding, one of the potential reason is we have high drop out rate as 0.5. High drop out rate may influence our final result. In the future work, I will try different combinations with drop out rate. (shown in the graph: 2plot.jpeg; 2result.jpeg)
 
 
 #CASL 8.11.8
