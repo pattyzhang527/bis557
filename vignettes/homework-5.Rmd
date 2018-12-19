@@ -63,7 +63,7 @@ fit <- cv.glmnet(x_train[s, ], y_train[s], family = "multinomial")
 
 # in-sample test, accuracy on training dataset
 preds.train1 <- predict(fit$glmnet.fit, x_train[s, ], s = fit$lambda.min, type = "class")
-t1 <- table(as.vector(preds.in1), y_train[s])
+t1 <- table(as.vector(preds.train1), y_train[s])
 sum(diag(t1)) / sum(t1) 
 
 # out-of-sample test, accuracy on testing dataset
@@ -97,7 +97,7 @@ plot3+scale_x_discrete(limits=0:9)+xlab("digit label")+ylab("skewness")+ggtitle(
 Since their means/values are very different among different digits and pixels, indicating that the above three features may be useful in identifying handwriting characters. In the following models, we are trying to include intensity and kurtosis and check the out-of-sample prediction accuracy.
 ```{r, eval=FALSE}
 #Train the model with intensity
-intensity<-as.vector(intensity)
+intensity<-as.vector(int_mean)
 x_train<-cbind(x_train,intensity)
 x_test<-cbind(x_test,as.vector(apply(x_test,1,mean)))
 
@@ -105,12 +105,12 @@ fit <- cv.glmnet(x_train[s,], y_train[s], family = "multinomial")
 # in-sample test, accuracy on training dataset
 preds.train2 <- predict(fit$glmnet.fit, x_train[s, ], s = fit$lambda.min, type = "class")
 t3 <- table(as.vector(preds.train2), y_train[s])
-sum(diag(t3)) / sum(t3) ## prediction accuracy on training dataset, 0.978
+sum(diag(t3)) / sum(t3) 
 
 # out-of-sample test, accuracy on testing dataset
 preds.test2 <- predict(fit$glmnet.fit, x_test, s = fit$lambda.min, type = "class")
 t4 <- table(as.vector(preds.test2), y_test)
-sum(diag(t4)) / sum(t4) ## prediction accuracy on testing dataset, 0.8515
+sum(diag(t4)) / sum(t4) 
 ```
 With only intensity, the in-sample prediction accuracy on training dataset is 0.978, and the out-of-sample prediction accuracy on test dataset is 0.8515. The out-of-sample prediction accuracy is slightly better than the original model.
 ```{r, eval=FALSE}
@@ -121,12 +121,12 @@ x_test<-cbind(x_test,as.vector(apply(x_test,1,kurtosis)))
 #With intensity and kurtosis in the features
 fit <- cv.glmnet(x_train[s,], y_train[s], family = "multinomial")
 preds.train3 <- predict(fit$glmnet.fit, x_train[s, ], s = fit$lambda.min, type = "class")
-t4 <- table(as.vector(preds.train3), y_train[s])
-sum(diag(t5)) / sum(t5) ## prediction accuracy on training dataset, 0.982
+t5 <- table(as.vector(preds.train3), y_train[s])
+sum(diag(t5)) / sum(t5)
 
 # out-of-sample test, accuracy on testing dataset
 preds.test3 <- predict(fit$glmnet.fit, x_test, s = fit$lambda.min, type = "class")
-t5 <- table(as.vector(preds.test3), y_test)
+t6 <- table(as.vector(preds.test3), y_test)
 sum(diag(t6)) / sum(t6) ## prediction accuracy on testing dataset, 0.8528
 ```
 
@@ -134,120 +134,131 @@ Without intensity and kurtosis, the in-sample prediction accuracy on training da
 
 In order to further improve the ou-of-sample prediction accuracy, we need to utilize machine learning techniques, while CNN plays an important role in identifying handwrting digits, characters and images, therefore, here, CNN method is utilized.
 
-Since I set Epoch = 10, R need to train 60,000 samples in 10 times. Becasue of the limitation in my CPU, it crashed several times on my computer. In case of such problems, I also attached the result photo here.
-```{r, eval=FALSE}
-#redefine the dataset
-X_train <- array_reshape(X_train, dim = c(nrow(X_train), 28, 28, 1))
-X_valid <- array_reshape(X_valid, dim = c(nrow(X_valid), 28, 28, 1))
-#convert the value to a binary data
-Y_train <- to_categorical(Y_train, 10L)
-Y_valid <- to_categorical(Y_valid, 10L)
-# define the model
-model <- keras_model_sequential()
-model %>% 
-layer_conv_2d(filters = 32, kernel_size = c(2,2),
-input_shape = c(28, 28, 1),
-                padding = "same") %>%
-layer_activation(activation = "relu") %>%
-layer_max_pooling_2d(pool_size = c(2, 2)) %>%
-layer_dropout(rate = 0.5) %>%
-layer_flatten() %>%
-layer_dense(units = 128) %>%
-layer_activation(activation = "relu") %>%
-layer_dropout(rate = 0.5) %>%
-layer_dense(units = 128) %>%
-layer_activation(activation = "relu") %>%
-layer_dropout(rate = 0.5) %>%
-layer_dense(units = 10) %>%
-layer_activation(activation = "softmax")
-# Compile model
-model %>% compile(loss = 'categorical_crossentropy',
-                  optimizer = optimizer_rmsprop(),
-                  metrics = c('accuracy'))
-set.seed(1527)
-plot2 <- model %>%
-  fit(X_train, Y_train, epochs = 10,
-      validation_data = list(X_valid, Y_valid))
-predict.train <- predict_classes(model, X_train)
-predict.test <- predict_classes(model, X_valid)
-plot(plot2)
-#print the final result
-print(paste0("Prediction accuracy on training dataset is ", mean(predict.train == y_train)))
-print(paste0("Prediction accuracy on testing dataset is ", mean(predict.test == y_test)))
+Since I set Epoch = 2, R need to train 480,000 samples twice. Becasue of the limitation in my CPU, it crashed several times on my computer. In case of such problems, I also attached the result photo here.
 
-#data(plot21)
-#data(predict_train_1)
-#data(predict_test_1)
+```{r, eval=FALSE}
+# Define parameters
+batch_size <- 128
+num_classes <- 10
+epochs <- 2
+
+#Input image dimensions
+img_rows <- 28
+img_cols <- 28
+
+# Split between train and test sets
+mnist <- dataset_mnist()
+x_train <- mnist$train$x
+y_train <- mnist$train$y
+x_test <- mnist$test$x
+y_test <- mnist$test$y
+
+# Redefine  dimension of train/test inputs
+x_train <- array_reshape(x_train, c(nrow(x_train), img_rows, img_cols, 1))
+x_test <- array_reshape(x_test, c(nrow(x_test), img_rows, img_cols, 1))
+input_shape <- c(img_rows, img_cols, 1)
+
+# Transform RGB values into [0,1] range
+x_train <- x_train / 255
+x_test <- x_test / 255
+cat('x_train_shape:', dim(x_train), '\n')
+cat(nrow(x_train), 'train samples\n')
+cat(nrow(x_test), 'test samples\n')
+
+# Convert class vectors to binary class matrices
+y_train <- to_categorical(y_train, num_classes)
+y_test <- to_categorical(y_test, num_classes)
+
+
+# Define model
+model <- keras_model_sequential() %>%
+  layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = 'relu',
+                input_shape = input_shape) %>% 
+  layer_conv_2d(filters = 64, kernel_size = c(3,3), activation = 'relu') %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>% 
+  layer_dropout(rate = 0.25) %>% 
+  layer_flatten() %>% 
+  layer_dense(units = 128, activation = 'relu') %>% 
+  layer_dropout(rate = 0.5) %>% 
+  layer_dense(units = num_classes, activation = 'softmax')
+
+# Compile model
+model %>% compile(
+  loss = loss_categorical_crossentropy,
+  optimizer = optimizer_adadelta(),
+  metrics = c('accuracy')
+)
+
+# Train model
+model %>% fit(
+  x_train, y_train,
+  batch_size = batch_size,
+  epochs = epochs,
+  validation_split = 0.2
+)
+scores <- model %>% evaluate(
+  x_test, y_test, verbose = 0
+)
+
+# The final result
+cat('Test loss:', scores[[1]], '\n')
+cat('Test accuracy:', scores[[2]], '\n')
 ```
 
-From the output above, the out-of-sample prediction accuracy is greatly increased in the CNN method. In this way, the potential overfitting problem is solved. It represents that CNN plays a better role in identifying handwriting characters than LASSO.
+From the output above, the out-of-sample prediction accuracy is over 98%, greatly larger than 85%, indicating that the out-of-sample prediction increases in the CNN method. It represents that CNN plays a better role in identifying handwriting characters than LASSO.
 
-![Prediction Accuracy on Training and Testing Dataset](/Users/tianyuanzhang/Desktop/accuracy.png)
+![CNN Result](/Users/tianyuanzhang/Desktop/cnn result.png)
 
 
 #CASL 8.11.4
-Data Preparation
-reference:http://arxiv.org/abs/1702.05373
-The original data is too large to include in the R package, so the reference of dataset details is included for further review. I split the original data into train and test set ,and used 'emnist_train' and 'emnist_test' to represent the train and test set respectively. 
+I downloaded the emnist dataset from https://www.westernsydney.edu.au/bens/home/reproducible_research/emnist
+Preparing for further evaluation, I split the dataset into training and testing dataset, where the traning datset contains 88,799 observations and the testing dataset contains 14,799 observations.
 
-Before the real experiment, I used a relatively small sample size and epoch of train data to get some intuitive idea about how I can adjust kernel size.
+In order to figure out the most suitable kernel size, I tried size = (2,2); (3,3); (5,5); (6,6) and found the test accuracy for them are 0.6841003, 0.6623017, 0.702615 and 0.6711203 respectively. Therefore, a kernel size = (5,5) should be utilized in the following calculation.
+
+I first tried 10 epochs and found that the valid accuracy would first increase and achieves its highest point at ephochs = approximately 2 or 3, and then the accuracy starts decreasing. (Shown in the graph: accuracy changes with epoch). Therefore, using epoch = 10 is not a good idea in this problem when calculating the accuracy.
+
+![accuracy changes with epoch](/Users/tianyuanzhang/Desktop/epoch change.jpeg)
+![accuracy values changes with epoch](/Users/tianyuanzhang/Desktop/epoch change value.jpeg)
+Considering using 10 epoches in the iteration is a waste of time, I designed early stop point in the model training process. If the accuracy value decreases consecutively twice, the training will be automatically stopped, and the highest epoch will be produced.
+
 ```{r,eval=FALSE}
-#since the kernel size will influence the final accuracy, in order to find a suitable kernel size, I tried
-#Some intuition: epoch = 2
-#----------------------------------------------------#
-#Train on 5600 random samples from the train set
-#kernal_size=c(3,3)
-#test loss:1.122483  test accuracy: 0.6841003 
-#Train on 5600 random samples from the train set
-#kernal_size=c(5,5)
-#test loss: 1.002066  test accuracy: 0.702615  
-#Train on 5600 random samples from the train set
-#kernal_size=c(10,10)
-#test loss: 1.881055  test accuracy: 0.4311102  
-#----------------------------------------------------#
-#Train on all samples from the train set
-#kernal_size=c(10,10)
-#test loss: 0.6365508  test accuracy: 0.8044462  
-#Train on all samples from the train set
-#kernal_size=c(5,5)
-#test loss: 0.6365508  test accuracy: 0.8044462  
-#----------------------------------------------------#
-#From the above results, we can probably increase kernel size
-#to about 5 to enhance accuracy
-#Then the actual train set was used to verify my intuition. 
-#I set epoch to 10 and drop-out rate to 0.25 this time
-##Preparation
-#library(keras)
- load('/Users/tianyuanzhang/Desktop/emnist_test.rda')
-load('/Users/tianyuanzhang/Desktop/emnist_train.rda')
+#load data
+load('/Users/tianyuanzhang/desktop/emnist_test.rda')
+load('/Users/tianyuanzhang/desktop/emnist_train.rda')
+
+#define the training and testing dataset
 x_train <-as.matrix(emnist_train[,-1])
 x_test <-as.matrix(emnist_test[,-1])
 y_train<-emnist_train[,1]
 y_test<-emnist_test[,1]
 x_train <- array_reshape(x_train, c(nrow(x_train), 28, 28, 1))
 x_test <- array_reshape(x_test, c(nrow(x_test), 28, 28, 1))
+
 # Transform RGB values into [0,1] range
 x_train <- x_train/255
 x_test <- x_test/255
+
 cat('x_train_shape:', dim(x_train), '\n')
 cat(nrow(x_train), 'train samples\n')
 cat(nrow(x_test), 'test samples\n')
+
 # Convert class vectors to binary class matrices
 y_train <- to_categorical(as.matrix(y_train-1), num_classes = 26)
 y_test <- to_categorical(as.matrix(y_test-1), num_classes = 26)
-# Define Model -----------------------------------------------------------
+# Define Model 
 model <- keras_model_sequential()
 model %>%
-  layer_conv_2d(filters = 32, kernel_size = c(2,2),
+  layer_conv_2d(filters = 32, kernel_size = c(5,5),
                 input_shape = c(28, 28, 1),
                 padding = "same") %>%
   layer_activation(activation = "relu") %>%
-  layer_conv_2d(filters = 32, kernel_size = c(3,3),
+  layer_conv_2d(filters = 32, kernel_size = c(5,5),
                 padding = "same") %>%
   layer_activation(activation = "relu") %>%
   layer_max_pooling_2d(pool_size = c(2, 2)) %>%
   layer_dropout(rate = 0.5) %>%
-  layer_conv_2d(filters = 32, kernel_size = c(2,2),
+  layer_conv_2d(filters = 32, kernel_size = c(5,5),
                 padding = "same") %>%
   layer_activation(activation = "relu") %>%
   layer_conv_2d(filters = 32, kernel_size = c(5,5),
@@ -263,6 +274,8 @@ model %>%
   layer_dropout(rate = 0.25) %>%
   layer_dense(units = 26) %>%
   layer_activation(activation = "softmax")
+summary(model)
+
 # Compile model
 model %>% compile(loss = 'categorical_crossentropy',
                   optimizer = optimizer_rmsprop(),
@@ -270,19 +283,24 @@ model %>% compile(loss = 'categorical_crossentropy',
 # Train model
 model %>% fit(
   x_train, y_train,
-  epochs = 2,
-  validation_data = list(x_test,y_test)
+  validation_data = list(x_test,y_test),
+  epochs = 15,
+  callbacks=list(callback_early_stopping(patience=2, monitor='val_acc'))
 )
 predict.train <- predict_classes(model, x_train)
 predict.test <- predict_classes(model, x_test)
+
 # Output metrics
 cat('Train:', predict.train==(emnist_train[,1]-1), '\n')
-#0.9235239
 cat('Test:', predict.test==(emnist_test[,1]-1), '\n')
-#0.9029663
 ```
-After adjusting drop-out rate from 0.5 to 0.25 and kernel size from c(3,3) to c(5,5), the prediction accuracy on the train set improves a little. But unfortunately, the prediction accuracy on the test set is not better than the original parameters in book CASL. Specific values of accuracy and loss in each epoch can be found in picture 'prob2-prediction' in the vignette folder. I think a better combination of drop-out rate and kernel size can help improve the prediction accuracy on the test set, so we can do more experiments with better computers. 
-![prediction results](prob2-prediction.png)
+
+Our iteration stops at ephoch = 5, and the highest valid accuracy is 0.9182 and occurs at epoch = 3. The overall valid accuracy is 0.9057 and occurs at epoch = 5. The prediction accuracy in the text book are 0.9166667 (training) and 0.9039263 (testing).The  accuracy is very similar to our textbook. I also noticed that training accuracy is lower than the valid accuracy. To my understanding, one of the potential reason is we have high drop out rate as 0.5. High drop out rate may influence our final result. In the future work, I will try different combinations with drop out rate.
+
+
+![Final plot result](/Users/tianyuanzhang/Desktop/2plot.jpeg)
+
+![Final value result](/Users/tianyuanzhang/Desktop/2result.jpeg)
 
 
 
